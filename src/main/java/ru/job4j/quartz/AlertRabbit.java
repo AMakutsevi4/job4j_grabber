@@ -5,10 +5,8 @@ import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -31,7 +29,6 @@ public class AlertRabbit {
     }
 
     private static Connection initConnection(Properties config) throws ClassNotFoundException, SQLException {
-
         Class.forName(config.getProperty("driver"));
         connection = DriverManager.getConnection(readProperties().getProperty("url"),
                 readProperties().getProperty("username"),
@@ -51,7 +48,7 @@ public class AlertRabbit {
                     .usingJobData(data)
                     .build();
             SimpleScheduleBuilder times = simpleSchedule()
-                    .withIntervalInSeconds(5)
+                    .withIntervalInSeconds(Integer.parseInt(readProperties().getProperty("interval")))
                     .repeatForever();
             Trigger trigger = newTrigger()
                     .startNow()
@@ -77,7 +74,9 @@ public class AlertRabbit {
             System.out.println("Rabbit runs here ...");
             Connection connection = (Connection) context.getJobDetail().getJobDataMap().get("store");
             try (PreparedStatement statement = connection.prepareStatement("insert into rabbit(create_date) values (?)")) {
-                statement.setString(1, "14.12.2022");
+                LocalDateTime dateTime = LocalDateTime.now()
+                        .withHour(19).withMinute(0).withSecond(0).withNano(0);
+                statement.setString(1, String.valueOf(Timestamp.valueOf(dateTime)));
                 statement.execute();
 
             } catch (Exception e) {
