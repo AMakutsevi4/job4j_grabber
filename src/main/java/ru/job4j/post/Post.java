@@ -3,12 +3,12 @@ package ru.job4j.post;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public class ModelPost {
-    int id;
-    String title;
-    String link;
-    String description;
-    LocalDateTime created;
+public class Post {
+    private int id;
+    private String title;
+    private String link;
+    private String description;
+    private LocalDateTime created;
 
     public int getId() {
         return id;
@@ -69,12 +69,12 @@ public class ModelPost {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ModelPost modelPost = (ModelPost) o;
-        return Objects.equals(link, modelPost.link);
+        Post post = (Post) o;
+        return id == post.id && Objects.equals(title, post.title) && Objects.equals(link, post.link);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(link);
+        return Objects.hash(id, title, link);
     }
 }
