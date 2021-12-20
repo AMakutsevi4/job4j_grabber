@@ -41,17 +41,19 @@ public class SqlRuDateTimeParser implements DateTimeParser {
     public LocalDateTime parse(String parse) {
         String[] fullDate = parse.split(", ");
         String[] date = fullDate[0].split(" ");
+        String value;
         LocalDate localDate = LocalDate.now();
-        LocalTime localTime = LocalTime.parse(fullDate[1], timeFormat);
-        if (date.length == 3) {
-            localDate = LocalDate.parse(String.format("%s %s %s", date[0], MONTHS.get(date[1]), date[2]), dateFormat);
-            localTime = LocalTime.parse(fullDate[1], timeFormat);
-        } else if (parse.toLowerCase(Locale.ROOT).equals("сегодня")) {
-            localDate = LocalDate.now();
+        if (parse.toLowerCase(Locale.ROOT).equals("сегодня")) {
+            value = localDate.format(dateFormat);
         } else if (parse.toLowerCase(Locale.ROOT).equals("вчера")) {
-            localDate = LocalDate.now().minusDays(1);
+            value = localDate.minusDays(1).format(dateFormat);
+        } else {
+            String year = String.valueOf(Integer.parseInt(date[2]));
+            value = String.format("%s %s %s", date[0], MONTHS.get(date[1]), year);
         }
-        return LocalDateTime.of(localDate, localTime);
+        LocalDate day = LocalDate.parse(value, dateFormat);
+        LocalTime time = LocalTime.parse(fullDate[1], timeFormat);
+        return LocalDateTime.of(day, time);
     }
 
     public static void main(String[] args) throws IOException {
