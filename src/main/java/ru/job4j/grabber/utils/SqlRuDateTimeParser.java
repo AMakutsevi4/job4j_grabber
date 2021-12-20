@@ -43,9 +43,9 @@ public class SqlRuDateTimeParser implements DateTimeParser {
         String[] date = fullDate[0].split(" ");
         String value;
         LocalDate localDate = LocalDate.now();
-        if (parse.toLowerCase(Locale.ROOT).equals("сегодня")) {
+        if (parse.contains("сегодня")) {
             value = localDate.format(dateFormat);
-        } else if (parse.toLowerCase(Locale.ROOT).equals("вчера")) {
+        } else if (parse.contains("вчера")) {
             value = localDate.minusDays(1).format(dateFormat);
         } else {
             String year = String.valueOf(Integer.parseInt(date[2]));
