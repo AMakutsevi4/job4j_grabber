@@ -12,6 +12,7 @@ import ru.job4j.post.Post;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class SqlRuParse implements Parse {
 
@@ -28,12 +29,12 @@ public class SqlRuParse implements Parse {
         while (i <= 5) {
             String page = link + i++;
             Document doc = Jsoup.connect(page).get();
-            Elements row = doc.select(".messageHeader");
+            Elements row = doc.select(".postslisttopic");
             for (Element td : row) {
-                if (td.text().contains("javascript")) {
-                    continue;
+                if (td.text().toLowerCase(Locale.ROOT).contains("java")
+                        && !td.text().toLowerCase(Locale.ROOT).contains("javascript")) {
+                    list.add(detail(td.children().attr("href")));
                 }
-                list.add(detail(td.children().attr("href")));
             }
         }
         return list;
