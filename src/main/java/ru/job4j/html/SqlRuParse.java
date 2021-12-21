@@ -22,41 +22,41 @@ public class SqlRuParse implements Parse {
     }
 
     @Override
-    public List<String> list(String link) throws IOException {
-        List<String> list = new ArrayList<>();
+    public List<Post> list(String link) throws IOException {
+        List<Post> list = new ArrayList<>();
         int i = 1;
         while (i <= 5) {
             String page = link + i++;
             Document doc = Jsoup.connect(page).get();
-            Elements row = doc.select(".postslisttopic");
+            Elements row = doc.select(".messageHeader");
             for (Element td : row) {
-                list.add(detail(td.child(0).attr("href")));
+                if (td.text().contains("javascript")) {
+                    continue;
+                }
+                list.add(detail(td.children().attr("href")));
             }
         }
         return list;
     }
 
     @Override
-    public String detail(String link) throws IOException {
-        Document doc = Jsoup.connect(link).get();
-        String header = doc.select(".messageHeader").get(0).ownText();
-        String content = doc.select(".msgBody").get(1).text();
-        String valueData = doc.select(".msgFooter").get(0).text();
-        String[] data = valueData.split(" \\[");
+    public Post detail(String link) throws IOException {
         Post post = new Post();
         post.setLink(link);
-
-        return "Вакансия: " + header + "\n"
-                + "Описание: " + content + "\n"
-                + "Дата публикации вакансии: " + data[0] + "\n"
-                + "Ссылка на вакансию: " + post.getLink();
+        Document doc = Jsoup.connect(link).get();
+        post.setTitle(doc.select(".messageHeader").get(0).ownText());
+        post.setDescription(doc.select(".msgBody").get(1).text());
+        String valueData = doc.select(".msgFooter").get(0).text();
+        String[] data = valueData.split(" \\[");
+        post.setCreated(dateTimeParser.parse(data[0]));
+        return post;
     }
 
     public static void main(String[] args) throws IOException {
         String page = "https://www.sql.ru/forum/job-offers/";
         SqlRuParse sqlRuParse = new SqlRuParse(new SqlRuDateTimeParser());
-        List<String> list = sqlRuParse.list(page);
-        for (String post: list) {
+        List<Post> list = sqlRuParse.list(page);
+        for (Post post : list) {
             System.out.println(post);
         }
     }
