@@ -31,8 +31,8 @@ public class SqlRuParse implements Parse {
             Document doc = Jsoup.connect(page).get();
             Elements row = doc.select(".postslisttopic");
             for (Element td : row) {
-                if (td.text().toLowerCase(Locale.ROOT).contains("java")
-                        && !td.text().toLowerCase(Locale.ROOT).contains("javascript")) {
+                String parseTxt = td.text();
+                if (parseTxt.toLowerCase().contains("java") && !parseTxt.toLowerCase().contains("javascript")) {
                     list.add(detail(td.children().attr("href")));
                 }
             }
