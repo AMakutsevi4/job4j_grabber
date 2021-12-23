@@ -4,7 +4,6 @@ package ru.job4j.grabber;
 import ru.job4j.grabber.utils.SqlRuDateTimeParser;
 import ru.job4j.html.SqlRuParse;
 import ru.job4j.post.Post;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
@@ -16,10 +15,8 @@ public class PsqlStore implements Store, AutoCloseable {
     private final Connection cnn;
 
     public PsqlStore(Properties cfg) {
-        try (InputStream in = PsqlStore.class.getClassLoader()
-                .getResourceAsStream("app.properties")) {
-            cfg.load(in);
-            Class.forName(cfg.getProperty("jdbc.driver"));
+        try {
+           Class.forName(cfg.getProperty("driver"));
             cnn = DriverManager.getConnection(
                     cfg.getProperty("url"),
                     cfg.getProperty("username"),
@@ -38,7 +35,7 @@ public class PsqlStore implements Store, AutoCloseable {
             statement.setString(1, post.getTitle());
             statement.setString(2, post.getDescription());
             statement.setString(3, post.getLink());
-            statement.setString(4, String.valueOf(post.getCreated()));
+            statement.setTimestamp(4, Timestamp.valueOf(post.getCreated()));
             statement.execute();
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
@@ -53,17 +50,11 @@ public class PsqlStore implements Store, AutoCloseable {
     @Override
     public List<Post> getAll() {
         ArrayList<Post> table = new ArrayList<>();
-        var sql = "select * from items where id = ?;";
-        try (PreparedStatement statement = cnn.prepareStatement(sql)) {
-            try (ResultSet rslKey = statement.executeQuery()) {
+        var sql = "select * from post";
+        try (var statement = cnn.prepareStatement(sql)) {
+            try (var rslKey = statement.executeQuery()) {
                 if (rslKey.next()) {
-                    Post post = new Post();
-                    post.setId(rslKey.getInt("id"));
-                    post.setTitle(rslKey.getString("name"));
-                    post.setDescription(rslKey.getString("text"));
-                    post.setLink(rslKey.getString("link"));
-                    post.setCreated(rslKey.getTimestamp("created").toLocalDateTime());
-                    table.add(post);
+                   table.add(createPost(rslKey));
                 }
             }
         } catch (SQLException e) {
@@ -75,21 +66,27 @@ public class PsqlStore implements Store, AutoCloseable {
     @Override
     public Post findById(int id) {
         Post post = new Post();
-        var sql = "select * from items where id = ?;";
-        try (PreparedStatement statement = cnn.prepareStatement(sql)) {
+        var sql = "select * from post where id = ?;";
+        try (var statement = cnn.prepareStatement(sql)) {
             statement.setInt(1, id);
-            try (ResultSet rslKey = statement.executeQuery()) {
+            try (var rslKey = statement.executeQuery()) {
                 if (rslKey.next()) {
-                    post.setId(rslKey.getInt("id"));
-                    post.setTitle(rslKey.getString("name"));
-                    post.setDescription(rslKey.getString("text"));
-                    post.setLink(rslKey.getString("link"));
-                    post.setCreated(rslKey.getTimestamp("created").toLocalDateTime());
+                post = createPost(rslKey);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return post;
+    }
+
+    private Post createPost(ResultSet resultSet) throws SQLException {
+        Post post = new Post();
+        post.setId(resultSet.getInt("id"));
+        post.setTitle(resultSet.getString("name"));
+        post.setDescription(resultSet.getString("text"));
+        post.setLink(resultSet.getString("link"));
+        post.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
         return post;
     }
 
@@ -101,8 +98,16 @@ public class PsqlStore implements Store, AutoCloseable {
     }
 
     public static void main(String[] args) throws IOException {
-        String page = "https://www.sql.ru/forum/job-offers/";
+        Properties cfg = new Properties();
+        InputStream in = PsqlStore.class.getClassLoader()
+                .getResourceAsStream("app.properties");
+        cfg.load(in);
         SqlRuParse sqlRuParse = new SqlRuParse(new SqlRuDateTimeParser());
+        PsqlStore psqlStore = new PsqlStore(cfg);
+        String page = "https://www.sql.ru/forum/job-offers/";
         List<Post> list = sqlRuParse.list(page);
+        psqlStore.save(list.get(1));
+        System.out.println(psqlStore.getAll());
+        System.out.println(psqlStore.findById(1));
     }
 }
