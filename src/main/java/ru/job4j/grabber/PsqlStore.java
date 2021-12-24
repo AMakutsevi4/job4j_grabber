@@ -4,6 +4,7 @@ package ru.job4j.grabber;
 import ru.job4j.grabber.utils.SqlRuDateTimeParser;
 import ru.job4j.html.SqlRuParse;
 import ru.job4j.post.Post;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
@@ -12,11 +13,11 @@ import java.util.List;
 import java.util.Properties;
 
 public class PsqlStore implements Store, AutoCloseable {
-    private final Connection cnn;
+    private Connection cnn;
 
     public PsqlStore(Properties cfg) {
         try {
-           Class.forName(cfg.getProperty("driver"));
+            Class.forName(cfg.getProperty("driver"));
             cnn = DriverManager.getConnection(
                     cfg.getProperty("url"),
                     cfg.getProperty("username"),
@@ -54,7 +55,7 @@ public class PsqlStore implements Store, AutoCloseable {
         try (var statement = cnn.prepareStatement(sql)) {
             try (var rslKey = statement.executeQuery()) {
                 if (rslKey.next()) {
-                   table.add(createPost(rslKey));
+                    table.add(createPost(rslKey));
                 }
             }
         } catch (SQLException e) {
@@ -65,13 +66,13 @@ public class PsqlStore implements Store, AutoCloseable {
 
     @Override
     public Post findById(int id) {
-        Post post = new Post();
+        Post post = null;
         var sql = "select * from post where id = ?;";
         try (var statement = cnn.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (var rslKey = statement.executeQuery()) {
                 if (rslKey.next()) {
-                post = createPost(rslKey);
+                    post = createPost(rslKey);
                 }
             }
         } catch (SQLException e) {
