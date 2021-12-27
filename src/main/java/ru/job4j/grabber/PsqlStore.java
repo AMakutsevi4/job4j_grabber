@@ -54,7 +54,7 @@ public class PsqlStore implements Store, AutoCloseable {
         var sql = "select * from post";
         try (var statement = cnn.prepareStatement(sql)) {
             try (var rslKey = statement.executeQuery()) {
-                if (rslKey.next()) {
+               while (rslKey.next()) {
                     table.add(createPost(rslKey));
                 }
             }
