@@ -87,7 +87,7 @@ public class Grabber implements Grab {
             List<Post> rsl = new ArrayList<>();
             String page = "https://www.sql.ru/forum/job-offers/";
             try {
-                rsl.addAll(parse.list(page));
+                rsl = parse.list(page);
             } catch (IOException e) {
                 e.printStackTrace();
             }
