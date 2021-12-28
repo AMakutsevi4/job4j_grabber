@@ -1,0 +1,44 @@
+CREATE TABLE company
+(
+    id integer NOT NULL,
+    name character varying,
+    CONSTRAINT company_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE person
+(
+    id integer NOT NULL,
+    name character varying,
+    company_id integer references company(id),
+    CONSTRAINT person_pkey PRIMARY KEY (id)
+);
+
+insert into company (id, name) values (1, 'Tinkoff');
+insert into company (id, name) values (2, 'Elgacoal');
+insert into company (id, name) values (3, 'Gazprom');
+
+insert into person (id, name, company_id) values (1, 'Petr', 1);
+insert into person (id, name, company_id) values (2, 'Illya', 2);
+insert into person (id, name, company_id) values (3, 'Sergey', 3);
+insert into person (id, name, company_id) values (4, 'Vasya', 1);
+insert into person (id, name, company_id) values (5, 'Alexandr', 1);
+insert into person (id, name, company_id) values (6, 'Dmitry', 2);
+insert into person (id, name, company_id) values (7, 'Igor', 3);
+insert into person (id, name, company_id) values (8, 'Natali', 2);
+
+create view all_person
+as select c.name as company_name, p.name as person_name
+from company as c join person as p
+on p.company_id = c.id
+where p.company_id !=3;
+
+select * from all_person
+
+create view max_person
+as select c.name, count(p.id) 
+from company as c join person as p on c.id = p.company_id
+group by c.name
+order by count(p.id) desc
+limit 1;
+
+select * from max_person
